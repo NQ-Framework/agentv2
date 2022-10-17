@@ -35,6 +35,17 @@ function processSqlQuery(payload, client) {
         })
         .then((text) => {
           console.log("called api and got result: ", text);
+          client
+            .from("agent_query")
+            .update({
+              result: { status, errorText, resultSet: null },
+              executed_at: new Date(),
+              executed_by: 1,
+            })
+            .match({ id: payload.id })
+            .then((p) => {
+              console.log("done.", p);
+            });
         });
     }
     throw new Error("invalid output type");
