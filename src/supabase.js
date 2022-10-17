@@ -10,25 +10,11 @@ client.auth.signIn({
   password: process.env.SUPABASE_PASSWORD,
 });
 
-client.auth.onAuthStateChange((event, session) => {
+client.auth.onAuthStateChange((event) => {
   if (event === "SIGNED_IN") {
-    console.log("setting session to", session.refresh_token);
-    // client
-    //   .from("agent_query")
-    //   .update({
-    //     result: { test: "test" },
-    //     executed_at: new Date(),
-    //     executed_by: 1,
-    //     business_unit_id: 2,
-    //   })
-    //   .match({ id: 1144, business_unit_id: 2 })
-    //   .then((p) => {
-    //     console.log("done?", p);
-    //   });
     client
       .from("agent_query")
       .on("*", (payload) => {
-        console.log("stigo neki event");
         if (
           (payload.eventType === "INSERT" || payload.eventType === "UPDATE") &&
           payload.new.business_unit_id ===
@@ -49,6 +35,5 @@ client.auth.onAuthStateChange((event, session) => {
         }
       })
       .subscribe();
-    console.log("uid", session);
   }
 });

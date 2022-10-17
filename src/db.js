@@ -8,7 +8,4 @@ const knex = require("knex")({
     database: process.env.DB_DATABASE,
   },
 });
-knex.raw("select * from test_table").then((result) => {
-  console.log("res", result);
-});
 module.exports = knex;
