@@ -4,7 +4,7 @@ import {
 } from "./ananas-product.model.ts";
 import { AnanasPrice } from "./ananas-price.model.ts";
 import { ErpProduct } from "./erp-product.model.ts";
-import { format } from "https://deno.land/std@$STD_VERSION/datetime/mod.ts";
+import { format } from "https://deno.land/std@0.160.0/datetime/mod.ts";
 
 export const getSyncItems = (
   products: AnanasProduct[],
@@ -74,7 +74,6 @@ export const getPrices = async (
   }, [] as number[][]);
 
   for (const bucket of buckets) {
-    const idx = buckets.indexOf(bucket);
     const response = await fetch(
       `${Deno.env.get(
         "ANANAS_BASE_URL"
