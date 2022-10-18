@@ -1,6 +1,5 @@
 export async function getAnanasToken(): Promise<string> {
   const url = Deno.env.get("ANANAS_BASE_URL");
-  console.log("url je", url);
   const tokenResponse = await fetch(
     Deno.env.get("ANANAS_BASE_URL") + "/iam/api/v1/auth/token",
     {

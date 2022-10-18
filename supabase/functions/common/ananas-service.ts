@@ -4,6 +4,7 @@ import {
 } from "./ananas-product.model.ts";
 import { AnanasPrice } from "./ananas-price.model.ts";
 import { ErpProduct } from "./erp-product.model.ts";
+import { format } from "https://deno.land/std@$STD_VERSION/datetime/mod.ts";
 
 export const getSyncItems = (
   products: AnanasProduct[],
@@ -62,6 +63,7 @@ export const getPrices = async (
   products: AnanasProduct[]
 ): Promise<AnanasPrice[]> => {
   const ananasPrices: AnanasPrice[] = [];
+  const dateString = format(new Date(), "dd/MM/yyyy");
   const buckets = products.reduce((acc, product, index) => {
     const bucketIndex = Math.floor(index / 100);
     if (!acc[bucketIndex]) {
@@ -70,15 +72,13 @@ export const getPrices = async (
     acc[bucketIndex].push(product.id);
     return acc;
   }, [] as number[][]);
-  console.log(`sorted ananas products into: ${buckets.length} buckets!`);
 
   for (const bucket of buckets) {
     const idx = buckets.indexOf(bucket);
-    console.log(`calling bucket ${idx} of ${buckets.length}`);
     const response = await fetch(
       `${Deno.env.get(
         "ANANAS_BASE_URL"
-      )}/payment/api/v1/merchant-integration/prices?dateFrom=${"18/10/2022"}&merchantInventoryIds=${bucket.join(
+      )}/payment/api/v1/merchant-integration/prices?dateFrom=${dateString}&merchantInventoryIds=${bucket.join(
         ","
       )}`,
       {
@@ -91,11 +91,6 @@ export const getPrices = async (
       throw new Error("Could not get prices");
     }
     const prices = (await response.json()) as AnanasPrice[];
-    console.log(
-      `pushing results (${
-        prices?.length ?? "bad response"
-      }) from bucket ${idx} of ${buckets.length}`
-    );
     ananasPrices.push(...prices);
   }
   return ananasPrices;

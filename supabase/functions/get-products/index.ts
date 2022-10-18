@@ -8,8 +8,6 @@ import { getSyncItems, getPrices } from "../common/ananas-service.ts";
 import { ErpProduct } from "../common/erp-product.model.ts";
 import { getAnanasToken } from "../common/get-ananas-token.ts";
 
-console.log("Hello from Functions!");
-
 serve(async (req) => {
   const erpProducts = ((await req.json()) as { result: ErpProduct[] }).result;
   const token = await getAnanasToken();
@@ -25,14 +23,15 @@ serve(async (req) => {
   );
   const products = (await response.json()) as AnanasProduct[];
   console.log(
-    `Got this many pantheon products: ${erpProducts.length} and this many ananas produts: ${products.length}`
+    `Executing product sync. Got this many pantheon products: ${erpProducts.length} and this many ananas produts: ${products.length}`
   );
 
   const currentPrices = await getPrices(token, products);
+  console.log("Loaded current prices", currentPrices.length);
 
   const updateItems = getSyncItems(products, erpProducts, currentPrices);
   if (!updateItems || updateItems.length === 0) {
-    console.log("No items to update! 😎");
+    console.log("No items to update! Job done");
     return new Response(
       JSON.stringify({
         status: "ok",
@@ -58,8 +57,16 @@ serve(async (req) => {
       body: JSON.stringify(updateItems),
     }
   );
+  if (!updateResponse.ok) {
+    const text = await updateResponse.text();
+    console.error(
+      "Ananas error response after update! Job done.",
+      updateResponse.status,
+      text
+    );
+  }
   const jsonData = await updateResponse.json();
-  console.log("Ananas response after update ", jsonData);
+  console.log("Ananas success response after update. Job done.");
 
   return new Response(
     JSON.stringify({
