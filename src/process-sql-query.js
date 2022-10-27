@@ -36,7 +36,8 @@ function processSqlQuery(payload, client) {
               executed_at: new Date(),
               executed_by: 1,
             })
-            .match({ id: payload.id });
+            .match({ id: payload.id })
+            .then((res) => console.log("updated agent query response: ", res));
         });
     }
     throw new Error("invalid output type");
