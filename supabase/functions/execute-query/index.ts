@@ -22,9 +22,9 @@ serve(async (req) => {
   );
   const uuid = uuidV4.generate();
   await supabaseClient.from("agent_query").insert({
-    business_unit_id: 4,
+    business_unit_id: body.businessUnitId,
     request: {
-      type: "sql-query",
+      type: body.queryType,
       query: body.query,
     },
     request_id: uuid,
