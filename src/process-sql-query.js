@@ -17,8 +17,14 @@ function processSqlQuery(payload, client) {
     }
     if (payload.request.output === "callUrl") {
       const { url } = payload.request;
-      const { authHeader } = payload.request;
-      const body = JSON.stringify({ result });
+      let { authHeader } = payload.request;
+      if (authHeader === "inherit") {
+        authHeader = `Bearer ${client.auth.session().access_token}`;
+      }
+      const body = JSON.stringify({
+        result,
+        businessUnitId: process.env.SUPABASE_BU_ID,
+      });
       return fetch(url, {
         method: "POST",
         headers: authHeader

@@ -1,16 +1,33 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
-
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import { AnanasProduct } from "../common/ananas-product.model.ts";
 import { getSyncItems, getPrices } from "../common/ananas-service.ts";
 import { ErpProduct } from "../common/erp-product.model.ts";
 import { getAnanasToken } from "../common/get-ananas-token.ts";
+import { createClient } from "../deps.ts";
 
 serve(async (req) => {
-  const erpProducts = ((await req.json()) as { result: ErpProduct[] }).result;
-  const token = await getAnanasToken();
+  const body = await req.json();
+  console.log("received body: ", body);
+  const { result: erpProducts, businessUnitId } = body as {
+    result: ErpProduct[];
+    businessUnitId: string;
+  };
+
+  const supabaseClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    {
+      global: { headers: { Authorization: req.headers.get("Authorization")! } },
+    }
+  );
+
+  const token = await getAnanasToken(parseInt(businessUnitId), supabaseClient);
+  if (!token) {
+    return new Response(
+      "Auth error or Ananas not setup for business unit id ",
+      { status: 400 }
+    );
+  }
 
   const response = await fetch(
     Deno.env.get("ANANAS_BASE_URL") +
