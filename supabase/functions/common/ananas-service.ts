@@ -5,6 +5,7 @@ import {
 import { AnanasPrice } from "./ananas-price.model.ts";
 import { ErpProduct } from "./erp-product.model.ts";
 import { format } from "https://deno.land/std@0.160.0/datetime/mod.ts";
+import addDays from "https://deno.land/x/date_fns@v2.22.1/addDays/index.ts";
 
 export const getSyncItems = (
   products: AnanasProduct[],
@@ -63,7 +64,7 @@ export const getPrices = async (
   products: AnanasProduct[]
 ): Promise<AnanasPrice[]> => {
   const ananasPrices: AnanasPrice[] = [];
-  const dateString = format(new Date(), "dd/MM/yyyy");
+  const dateString = format(addDays(new Date(), 1), "dd/MM/yyyy");
   const buckets = products.reduce((acc, product, index) => {
     const bucketIndex = Math.floor(index / 100);
     if (!acc[bucketIndex]) {
