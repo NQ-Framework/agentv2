@@ -7,4 +7,5 @@ export type FiscalReceipt = {
   articles: FiscalArticle[];
   fiscalDetails: FiscalDetails;
   qrImageUrl: string;
+  fiscalPrintImageUrl: string;
 };

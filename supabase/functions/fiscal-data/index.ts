@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import { parseFiscalHtml } from "../common/fiscal-parser.service.ts";
-import { createClient, SupabaseClient } from "../deps.ts";
+import { createClient } from "../deps.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -36,14 +36,20 @@ serve(async (req) => {
   const response = await fetch(url);
   const text = await response.text();
   try {
-    const { generalFiscalData, fiscalDetails, articles, qrImageUrl } =
-      parseFiscalHtml(text);
+    const {
+      generalFiscalData,
+      fiscalDetails,
+      articles,
+      qrImageUrl,
+      fiscalPrintImageUrl,
+    } = await parseFiscalHtml(text);
     return new Response(
       JSON.stringify({
         generalFiscalData,
         fiscalDetails,
         articles,
         qrImageUrl,
+        fiscalPrintImageUrl,
       }),
       {
         headers: {

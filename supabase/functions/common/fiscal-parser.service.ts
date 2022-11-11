@@ -4,20 +4,23 @@ import { fiscalFieldNameMap } from "./general-fiscal-data.model.ts";
 import type { GeneralFiscalData } from "./general-fiscal-data.model.ts";
 import type { FiscalDetails, TaxDetails } from "./fiscal-details.model.ts";
 import type { FiscalReceipt } from "./fiscal-receipt.model.ts";
+import { drawFiscalImage } from "./draw-fiscal-image.ts";
 
-export const parseFiscalHtml = (html: string): FiscalReceipt => {
+export const parseFiscalHtml = async (html: string): Promise<FiscalReceipt> => {
   const root = new DOMParser().parseFromString(html, "text/html");
   if (!root) {
     throw Error("Could not parse fiscal html");
   }
   const generalFiscalData = parseGeneralFiscalData(root);
-  const { articles, fiscalDetails, qrImageUrl } = parseFiscalDetails(root);
+  const { articles, fiscalDetails, qrImageUrl, fiscalPrintImageUrl } =
+    await parseFiscalDetails(root);
 
   return {
     articles,
     generalFiscalData,
     fiscalDetails,
     qrImageUrl,
+    fiscalPrintImageUrl,
   };
 };
 
@@ -37,18 +40,22 @@ const parseGeneralFiscalData = (root: HTMLDocument): GeneralFiscalData => {
   return fiscalData;
 };
 
-const parseFiscalDetails = (
+const parseFiscalDetails = async (
   root: HTMLDocument
-): {
+): Promise<{
   articles: FiscalArticle[];
   qrImageUrl: string;
+  fiscalPrintImageUrl: string;
   fiscalDetails: FiscalDetails;
-} => {
-  const text = root.getElementsByTagName("pre")[0].innerHTML;
-  const articles = parseFiscalArticles(text);
-  const qrImageUrl = parseQrImageUrl(text);
-  const fiscalDetails = parseFiscalDetailsData(text);
-  return { articles, qrImageUrl, fiscalDetails };
+}> => {
+  const element = root.getElementsByTagName("pre")[0];
+  const html = element.innerHTML;
+  const text = element.textContent;
+  const articles = parseFiscalArticles(html);
+  const qrImageUrl = parseQrImageUrl(html);
+  const fiscalDetails = parseFiscalDetailsData(html);
+  const fiscalPrintImageUrl = await drawFiscalImage(text, qrImageUrl);
+  return { articles, qrImageUrl, fiscalDetails, fiscalPrintImageUrl };
 };
 
 const parseFiscalArticles = (detailsText: string): FiscalArticle[] => {
