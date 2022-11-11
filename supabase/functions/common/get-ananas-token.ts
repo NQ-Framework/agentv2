@@ -18,7 +18,7 @@ export async function getAnanasApiDetails(
 
   const clientId: string = result.data?.[0]?.client_id;
   const clientSecret: string = result.data?.[0]?.token;
-  const baseUrl: string = result.data?.[0]?.base_url;
+  const baseUrl: string = result.data?.[0]?.base_api_url;
 
   const tokenResponse = await fetch(`${baseUrl}/iam/api/v1/auth/token`, {
     headers: {
