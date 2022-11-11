@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
-import { getAnanasToken } from "../common/get-ananas-token.ts";
+import { getAnanasApiDetails } from "../common/get-ananas-token.ts";
 import { createClient } from "../deps.ts";
 
 serve(async (req) => {
@@ -18,9 +18,12 @@ serve(async (req) => {
     }
   );
 
-  const token = await getAnanasToken(body.business_unit_id, supabaseClient);
+  const apiDetails = await getAnanasApiDetails(
+    body.business_unit_id,
+    supabaseClient
+  );
 
-  if (!token) {
+  if (!apiDetails) {
     return new Response(
       "Auth error or Ananas not setup for business unit id ",
       { status: 400 }
@@ -28,11 +31,11 @@ serve(async (req) => {
   }
 
   const response = await fetch(
-    Deno.env.get("ANANAS_BASE_URL") +
+    apiDetails.baseUrl +
       "/product/api/v1/merchant-integration/products?size=2000",
     {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${apiDetails.token}`,
       },
     }
   );

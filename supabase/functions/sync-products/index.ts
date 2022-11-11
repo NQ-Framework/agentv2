@@ -3,7 +3,7 @@ import { AnanasProduct } from "../common/ananas-product.model.ts";
 import { getSyncItems, getPrices } from "../common/ananas-service.ts";
 import { AnanasUpdateResponse } from "../common/ananas-update-response.model.ts";
 import { ErpProduct } from "../common/erp-product.model.ts";
-import { getAnanasToken } from "../common/get-ananas-token.ts";
+import { getAnanasApiDetails } from "../common/get-ananas-token.ts";
 import { LogItem } from "../common/log-item.ts";
 import { createClient } from "../deps.ts";
 import { v4 as uuidV4 } from "https://deno.land/std@0.82.0/uuid/mod.ts";
@@ -31,8 +31,8 @@ serve(async (req) => {
   );
   (await supabaseClient.auth.getSession()).data.session?.access_token;
 
-  const token = await getAnanasToken(businessUnitId, supabaseClient);
-  if (!token) {
+  const apiDetails = await getAnanasApiDetails(businessUnitId, supabaseClient);
+  if (!apiDetails) {
     return new Response(
       "Auth error or Ananas not setup for business unit id ",
       { status: 400 }
@@ -40,11 +40,11 @@ serve(async (req) => {
   }
 
   const response = await fetch(
-    Deno.env.get("ANANAS_BASE_URL") +
+    apiDetails.baseUrl +
       "/product/api/v1/merchant-integration/products?size=2000",
     {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${apiDetails.token}`,
       },
     }
   );
@@ -53,7 +53,7 @@ serve(async (req) => {
     `Executing product sync. Got this many pantheon products: ${erpProducts.length} and this many ananas produts: ${products.length}`
   );
 
-  const currentPrices = await getPrices(token, products);
+  const currentPrices = await getPrices(apiDetails, products);
   console.log("Loaded current prices", currentPrices.length);
 
   const updateItems = getSyncItems(products, erpProducts, currentPrices);
@@ -93,12 +93,11 @@ serve(async (req) => {
   let ananasResponse = null;
   try {
     const updateResponse = await fetch(
-      Deno.env.get("ANANAS_BASE_URL") +
-        "/product/api/v1/merchant-integration/product/bulk",
+      apiDetails.baseUrl + "/product/api/v1/merchant-integration/product/bulk",
       {
         method: "PUT",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${apiDetails.token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(updateItems),

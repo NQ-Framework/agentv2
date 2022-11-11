@@ -60,7 +60,7 @@ const hasDifference = (
 };
 
 export const getPrices = async (
-  token: string,
+  apiDetails: { baseUrl: string; token: string },
   products: AnanasProduct[]
 ): Promise<AnanasPrice[]> => {
   const ananasPrices: AnanasPrice[] = [];
@@ -76,14 +76,14 @@ export const getPrices = async (
 
   for (const bucket of buckets) {
     const response = await fetch(
-      `${Deno.env.get(
-        "ANANAS_BASE_URL"
-      )}/payment/api/v1/merchant-integration/prices?dateFrom=${dateString}&merchantInventoryIds=${bucket.join(
+      `${
+        apiDetails.baseUrl
+      }/payment/api/v1/merchant-integration/prices?dateFrom=${dateString}&merchantInventoryIds=${bucket.join(
         ","
       )}`,
       {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${apiDetails.token}`,
         },
       }
     );
