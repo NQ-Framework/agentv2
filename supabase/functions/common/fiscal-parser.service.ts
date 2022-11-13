@@ -1,4 +1,4 @@
-import { DOMParser, HTMLDocument } from "../deps.ts";
+import { DOMParser, Element, HTMLDocument } from "../deps.ts";
 import type { FiscalArticle } from "./fiscal-article.model.ts";
 import { fiscalFieldNameMap } from "./general-fiscal-data.model.ts";
 import type { GeneralFiscalData } from "./general-fiscal-data.model.ts";
@@ -28,8 +28,10 @@ const parseGeneralFiscalData = (root: HTMLDocument): GeneralFiscalData => {
   const elements = Array.from(root.querySelectorAll(".col-form-label"));
 
   const fiscalData: GeneralFiscalData = elements.reduce((data: any, e) => {
-    const name = e.textContent.trim();
-    const value = e.nextSibling?.textContent.trim();
+    const node = e as Element;
+    const nextSib = e.parentElement?.querySelector(".col-md-12");
+    const name = node.innerHTML.trim() ?? "";
+    const value = nextSib?.innerHTML.trim() ?? "";
     const keyName = fiscalFieldNameMap[name];
     data[keyName] = value;
     return data;
