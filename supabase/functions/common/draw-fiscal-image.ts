@@ -1,14 +1,19 @@
 export const drawFiscalImage = (text: string, qrImageUrl: string): string => {
-  const lines = text.split("\n").map((l) => {
-    if (l.length < 40) {
-      const pad = 40 - l.length;
-      const left = Math.floor(pad / 2);
-      const right = pad - left;
-      return " ".repeat(left) + l + " ".repeat(right);
-    }
-    return l;
-  });
-
+  const lines = text
+    .split("\n")
+    .map((l) => {
+      if (l === "======== КРАЈ ФИСКАЛНОГ РАЧУНА =========") {
+        return "";
+      }
+      if (l.length < 40) {
+        const pad = 40 - l.length;
+        const left = Math.floor(pad / 2);
+        const right = pad - left;
+        return " ".repeat(left) + l + " ".repeat(right);
+      }
+      return l;
+    })
+    .filter((l) => l !== "");
   const imageHeight = 388;
   const lineHeight = 32;
   const fontHeight = 24;
