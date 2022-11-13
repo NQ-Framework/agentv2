@@ -8,17 +8,4 @@ import {
   Element,
 } from "https://deno.land/x/deno_dom@v0.1.35-alpha/deno-dom-wasm.ts";
 
-import {
-  createCanvas,
-  loadImage,
-} from "https://deno.land/x/canvas@v1.4.1/mod.ts";
-
-export {
-  createClient,
-  SupabaseClient,
-  DOMParser,
-  HTMLDocument,
-  createCanvas,
-  loadImage,
-  Element,
-};
+export { createClient, SupabaseClient, DOMParser, HTMLDocument, Element };
