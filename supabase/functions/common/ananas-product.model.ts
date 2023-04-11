@@ -9,6 +9,7 @@ export type AnanasProduct = {
   productType: string;
   categories: string[];
   basePrice: number;
+  newBasePrice: number;
   vat: number;
   stockLevel: number;
   packageWeightValue: number;

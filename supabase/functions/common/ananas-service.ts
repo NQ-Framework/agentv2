@@ -9,8 +9,7 @@ import addDays from "https://deno.land/x/date_fns@v2.22.1/addDays/index.ts";
 
 export const getSyncItems = (
   products: AnanasProduct[],
-  erpProducts: ErpProduct[],
-  currentPrices: AnanasPrice[]
+  erpProducts: ErpProduct[]
 ): UpdateAnanasProductDTO[] => {
   const dtos: UpdateAnanasProductDTO[] = [];
 
@@ -18,9 +17,7 @@ export const getSyncItems = (
     const erpProduct =
       erpProducts.find((ep) => ep.acCode === p.ean) ||
       erpProducts.find((ep) => ep.acIdent === p.sku);
-    const ananasPrice =
-      currentPrices.find((cp) => cp.merchantInventoryId === p.id) ?? null;
-    if (erpProduct && hasDifference(p, erpProduct, ananasPrice)) {
+    if (erpProduct && hasDifference(p, erpProduct)) {
       dtos.push({
         basePrice: erpProduct.anSalePrice,
         id: p.id,
@@ -36,8 +33,7 @@ export const getSyncItems = (
 
 const hasDifference = (
   product: AnanasProduct,
-  erpProduct: ErpProduct,
-  ananasPrice: AnanasPrice | null
+  erpProduct: ErpProduct
 ): boolean => {
   if (product.ean !== erpProduct.acCode) {
     throw new Error("comparing frogs and grandmothers");
@@ -45,12 +41,8 @@ const hasDifference = (
   if (product.stockLevel !== erpProduct.anStock) {
     return true;
   }
-  let productPrice = product.basePrice;
-  if (ananasPrice !== null) {
-    productPrice = ananasPrice.basePrice;
-  }
 
-  if (productPrice !== erpProduct.anSalePrice) {
+  if (product.newBasePrice !== erpProduct.anSalePrice) {
     return true;
   }
 
@@ -99,4 +91,46 @@ merchantInventoryIds: ${bucket.join(",")}
     ananasPrices.push(...prices);
   }
   return ananasPrices;
+};
+
+export const getProductsAllPages = async (apiDetails: {
+  baseUrl: string;
+  token: string;
+}): Promise<AnanasProduct[]> => {
+  console.log("start get all pages");
+  let page = 0;
+  const responseProducts: AnanasProduct[] = [];
+  let lastResponseEmpty = false;
+  while (!lastResponseEmpty) {
+    const products = await getProductsPage(apiDetails, page);
+    if (products.length === 0) {
+      lastResponseEmpty = true;
+    }
+    responseProducts.push(...products);
+    page++;
+    if (products.length > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+  console.log("returning all pages", responseProducts.length);
+  return responseProducts;
+};
+
+export const getProductsPage = async (
+  apiDetails: { baseUrl: string; token: string },
+  page = 0
+): Promise<AnanasProduct[]> => {
+  console.log("starting get page ", page);
+  const response = await fetch(
+    apiDetails.baseUrl +
+      `/product/api/v1/merchant-integration/products?size=250&page=${page}`,
+    {
+      headers: {
+        Authorization: `Bearer ${apiDetails.token}`,
+      },
+    }
+  );
+  const products = (await response.json()) as AnanasProduct[];
+  console.log("returning: ", products.length);
+  return products;
 };

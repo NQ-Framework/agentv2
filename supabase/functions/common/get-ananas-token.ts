@@ -32,6 +32,11 @@ export async function getAnanasApiDetails(
       scope: "public_api/full_access",
     }),
   });
+  console.log(
+    "got token response",
+    tokenResponse.status,
+    tokenResponse.statusText
+  );
   const tokenJson = await tokenResponse.json();
   return { token: tokenJson.access_token, baseUrl };
 }

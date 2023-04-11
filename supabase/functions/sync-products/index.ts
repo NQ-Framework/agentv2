@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
-import { AnanasProduct } from "../common/ananas-product.model.ts";
-import { getSyncItems, getPrices } from "../common/ananas-service.ts";
+import { getSyncItems, getProductsAllPages } from "../common/ananas-service.ts";
 import { AnanasUpdateResponse } from "../common/ananas-update-response.model.ts";
 import { ErpProduct } from "../common/erp-product.model.ts";
 import { getAnanasApiDetails } from "../common/get-ananas-token.ts";
@@ -31,7 +30,10 @@ serve(async (req) => {
   );
   (await supabaseClient.auth.getSession()).data.session?.access_token;
 
+  console.log("initialized supabase client");
+
   const apiDetails = await getAnanasApiDetails(businessUnitId, supabaseClient);
+  console.log("got api details", apiDetails);
   if (!apiDetails) {
     return new Response(
       "Auth error or Ananas not setup for business unit id ",
@@ -39,24 +41,13 @@ serve(async (req) => {
     );
   }
 
-  const response = await fetch(
-    apiDetails.baseUrl +
-      "/product/api/v1/merchant-integration/products?size=2000",
-    {
-      headers: {
-        Authorization: `Bearer ${apiDetails.token}`,
-      },
-    }
-  );
-  const products = (await response.json()) as AnanasProduct[];
+  const products = await getProductsAllPages(apiDetails);
+
   console.log(
     `Executing product sync. Got this many pantheon products: ${erpProducts.length} and this many ananas produts: ${products.length}`
   );
 
-  const currentPrices = await getPrices(apiDetails, products);
-  console.log("Loaded current prices", currentPrices.length);
-
-  const updateItems = getSyncItems(products, erpProducts, currentPrices);
+  const updateItems = getSyncItems(products, erpProducts);
   if (!updateItems || updateItems.length === 0) {
     console.log("No items to update! Job done");
     return new Response(
