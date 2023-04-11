@@ -12,26 +12,24 @@ export const getSyncItems = (
   erpProducts: ErpProduct[],
   currentPrices: AnanasPrice[]
 ): UpdateAnanasProductDTO[] => {
-  const dtos: UpdateAnanasProductDTO[] = products
-    .filter((p) => {
-      const erpProduct = erpProducts.find((ep) => ep.acCode === p.ean);
-      const ananasPrice =
-        currentPrices.find((cp) => cp.merchantInventoryId === p.id) ?? null;
-      return erpProduct && hasDifference(p, erpProduct, ananasPrice);
-    })
-    .map((p) => {
-      const erpProduct = erpProducts.find((ep) => ep.acCode === p.ean);
-      if (!erpProduct) {
-        throw new Error("couldnt relocate erp product after filter");
-      }
-      return {
+  const dtos: UpdateAnanasProductDTO[] = [];
+
+  for (const p of products) {
+    const erpProduct =
+      erpProducts.find((ep) => ep.acCode === p.ean) ||
+      erpProducts.find((ep) => ep.acIdent === p.sku);
+    const ananasPrice =
+      currentPrices.find((cp) => cp.merchantInventoryId === p.id) ?? null;
+    if (erpProduct && hasDifference(p, erpProduct, ananasPrice)) {
+      dtos.push({
         basePrice: erpProduct.anSalePrice,
         id: p.id,
         oldBasePrice: p.basePrice,
         oldStockLevel: p.stockLevel,
         stockLevel: erpProduct.anStock,
-      };
-    });
+      });
+    }
+  }
 
   return dtos;
 };
@@ -88,7 +86,14 @@ export const getPrices = async (
       }
     );
     if (!response.ok) {
-      throw new Error("Could not get prices");
+      const body = await response.text();
+      throw new Error(`Could not get prices. The parmameters were:
+status: ${response.status}
+code: ${response.statusText}
+body: ${body}
+dateString: ${dateString}
+merchantInventoryIds: ${bucket.join(",")}
+`);
     }
     const prices = (await response.json()) as AnanasPrice[];
     ananasPrices.push(...prices);
