@@ -35,9 +35,6 @@ const hasDifference = (
   product: AnanasProduct,
   erpProduct: ErpProduct
 ): boolean => {
-  if (product.ean !== erpProduct.acCode) {
-    throw new Error("comparing frogs and grandmothers");
-  }
   if (product.stockLevel !== erpProduct.anStock) {
     return true;
   }
