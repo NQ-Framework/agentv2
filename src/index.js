@@ -1,5 +1,5 @@
 const app = require("./app");
-require("./supabase");
+require("./supabase")();
 require("./db");
 
 const port = process.env.PORT || 5000;
