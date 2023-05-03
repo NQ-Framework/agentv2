@@ -4,6 +4,22 @@ const processQuery = require("../process-query");
 
 const router = express.Router();
 
+router.get("/verify", (req, res) => {
+  const { headers } = req;
+  if (
+    !headers.authorization ||
+    !headers.authorization === `Bearer ${process.env.API_SECRET}`
+  ) {
+    return res.status(401).json({
+      message: "Unauthorized",
+    });
+  }
+
+  return res.json({
+    message: "Authorized",
+  });
+});
+
 router.get("/", (req, res) => {
   const { query: queryParams, headers } = req;
   if (
