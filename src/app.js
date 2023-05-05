@@ -12,7 +12,13 @@ const app = express();
 
 app.use(morgan("dev"));
 app.use(helmet());
-app.use(cors());
+
+// allow all origins
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -21,7 +27,13 @@ app.get("/", (req, res) => {
   });
 });
 if (process.env.API_SECRET) {
-  app.use("/api/v1", api);
+  app.use(
+    "/api/v1",
+    cors({
+      origin: "*",
+    }),
+    api
+  );
 }
 
 app.use(middleware.notFound);
