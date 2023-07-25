@@ -7,6 +7,13 @@ import { ErpProduct } from "./erp-product.model.ts";
 import { format } from "https://deno.land/std@0.160.0/datetime/mod.ts";
 import addDays from "https://deno.land/x/date_fns@v2.22.1/addDays/index.ts";
 
+function matchIds(id1: string, id2: string): boolean {
+  if (!id1 || !id2) {
+    return false;
+  }
+  return id1 === id2;
+}
+
 export const getSyncItems = (
   products: AnanasProduct[],
   erpProducts: ErpProduct[]
@@ -15,8 +22,8 @@ export const getSyncItems = (
 
   for (const p of products) {
     const erpProduct =
-      erpProducts.find((ep) => ep.acCode === p.ean) ||
-      erpProducts.find((ep) => ep.acIdent === p.sku);
+      erpProducts.find((ep) => matchIds(ep.acCode, p.ean)) ||
+      erpProducts.find((ep) => matchIds(ep.acIdent, p.sku));
     if (erpProduct && hasDifference(p, erpProduct)) {
       dtos.push({
         basePrice: erpProduct.anSalePrice,
