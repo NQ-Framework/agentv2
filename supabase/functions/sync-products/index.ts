@@ -6,7 +6,10 @@ import { getAnanasApiDetails } from "../common/get-ananas-token.ts";
 import { LogItem } from "../common/log-item.ts";
 import { SupabaseClient, createClient } from "../deps.ts";
 import { v4 as uuidV4 } from "https://deno.land/std@0.82.0/uuid/mod.ts";
-import { UpdateAnanasItem, UpdateAnanasProductDTO } from "../common/ananas-product.model.ts";
+import {
+  UpdateAnanasItem,
+  UpdateAnanasProductDTO,
+} from "../common/ananas-product.model.ts";
 
 serve(async (req) => {
   const body = await req.json();
@@ -90,9 +93,21 @@ serve(async (req) => {
             },
     };
   });
-  
-  const responsePrice = await updateAnanasProducts("price", apiDetails, updateItems.filter(ui=> ui.update === "price"), logItems, adminSupabaseClient);
-  const responseStock = await updateAnanasProducts("stock", apiDetails, updateItems.filter(ui=> ui.update === "stock"), logItems, adminSupabaseClient);
+
+  const responsePrice = await updateAnanasProducts(
+    "price",
+    apiDetails,
+    updateItems.filter((ui) => ui.update === "price"),
+    logItems,
+    adminSupabaseClient
+  );
+  const responseStock = await updateAnanasProducts(
+    "stock",
+    apiDetails,
+    updateItems.filter((ui) => ui.update === "stock"),
+    logItems,
+    adminSupabaseClient
+  );
 
   return new Response(
     JSON.stringify({
@@ -114,7 +129,10 @@ async function updateAnanasProducts(
   updateItems: UpdateAnanasItem[],
   logItems: LogItem[],
   adminSupabaseClient: SupabaseClient
-): Promise<{ananasResponse: AnanasUpdateResponse[] | null, status: "success"|"fail"}> {
+): Promise<{
+  ananasResponse: AnanasUpdateResponse[] | null;
+  status: "success" | "fail";
+}> {
   let ananasResponse = null;
   try {
     const updateResponse = await fetch(
@@ -131,12 +149,12 @@ async function updateAnanasProducts(
               return {
                 id: ui.id,
                 basePrice: ui.basePrice,
-              } satisfies UpdateAnanasProductDTO;
+              };
             } else {
               return {
                 id: ui.id,
-               stockLevel: ui.stockLevel
-              } satisfies UpdateAnanasProductDTO;
+                stockLevel: ui.stockLevel,
+              };
             }
           })
         ),
@@ -153,7 +171,7 @@ async function updateAnanasProducts(
       logItems.forEach((li) => {
         li.status = "ananas api call error " + text;
       });
-      return {ananasResponse, status: "fail" }
+      return { ananasResponse, status: "fail" };
     } else {
       const jsonData = (await updateResponse.json()) as AnanasUpdateResponse[];
       ananasResponse = jsonData;
@@ -174,7 +192,7 @@ async function updateAnanasProducts(
     if (logInsertError) {
       console.error("Error inserting log items", logInsertError);
     }
-return {ananasResponse, status: "success"};
+    return { ananasResponse, status: "success" };
   } catch {
     logItems.forEach((li) => {
       li.status = "ananas api call error";
@@ -186,6 +204,6 @@ return {ananasResponse, status: "success"};
     if (logInsertError) {
       console.error("Error inserting log items", logInsertError);
     }
-    return {ananasResponse, status: "fail"}
+    return { ananasResponse, status: "fail" };
   }
 }
