@@ -4,8 +4,9 @@ import { AnanasUpdateResponse } from "../common/ananas-update-response.model.ts"
 import { ErpProduct } from "../common/erp-product.model.ts";
 import { getAnanasApiDetails } from "../common/get-ananas-token.ts";
 import { LogItem } from "../common/log-item.ts";
-import { createClient } from "../deps.ts";
+import { SupabaseClient, createClient } from "../deps.ts";
 import { v4 as uuidV4 } from "https://deno.land/std@0.82.0/uuid/mod.ts";
+import { UpdateAnanasItem, UpdateAnanasProductDTO } from "../common/ananas-product.model.ts";
 
 serve(async (req) => {
   const body = await req.json();
@@ -66,21 +67,54 @@ serve(async (req) => {
 
   const updateDate = new Date();
   const updateId = uuidV4.generate();
-  const logItems: LogItem[] = updateItems.map((item) => ({
-    created_at: updateDate,
-    update_id: updateId,
-    business_unit_id: businessUnitId,
-    product_id: item.id,
-    status: "pending",
-    update_details: {
-      type: "price-and-stock",
-      oldPrice: item.oldBasePrice,
-      newPrice: item.basePrice,
-      oldStock: item.oldStockLevel,
-      newStock: item.stockLevel,
-    },
-  }));
+  const logItems: LogItem[] = updateItems.map((item) => {
+    return {
+      created_at: updateDate,
+      update_id: updateId,
+      business_unit_id: businessUnitId,
+      product_id: item.id,
+      sku: item.sku,
+      ean: item.ean,
+      status: "pending",
+      update_details:
+        item.update === "price"
+          ? {
+              type: "price",
+              oldPrice: item.oldBasePrice,
+              newPrice: item.basePrice,
+            }
+          : {
+              type: "stock",
+              oldStock: item.oldStockLevel,
+              newStock: item.stockLevel,
+            },
+    };
+  });
+  
+  const responsePrice = await updateAnanasProducts("price", apiDetails, updateItems.filter(ui=> ui.update === "price"), logItems, adminSupabaseClient);
+  const responseStock = await updateAnanasProducts("stock", apiDetails, updateItems.filter(ui=> ui.update === "stock"), logItems, adminSupabaseClient);
 
+  return new Response(
+    JSON.stringify({
+      priceStatus: responsePrice.status,
+      stockStatus: responseStock.status,
+      ananasResponsePrice: responsePrice.ananasResponse,
+      ananasResposneStock: responseStock.ananasResponse,
+      message: `UpdatePrice: ${responsePrice.status} UpdateStock: ${responsePrice.status}`,
+    }),
+    {
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+});
+
+async function updateAnanasProducts(
+  type: "price" | "stock",
+  apiDetails: { token: string; baseUrl: string },
+  updateItems: UpdateAnanasItem[],
+  logItems: LogItem[],
+  adminSupabaseClient: SupabaseClient
+): Promise<{ananasResponse: AnanasUpdateResponse[] | null, status: "success"|"fail"}> {
   let ananasResponse = null;
   try {
     const updateResponse = await fetch(
@@ -91,7 +125,21 @@ serve(async (req) => {
           Authorization: `Bearer ${apiDetails.token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updateItems),
+        body: JSON.stringify(
+          updateItems.map((ui) => {
+            if (type === "price") {
+              return {
+                id: ui.id,
+                basePrice: ui.basePrice,
+              } satisfies UpdateAnanasProductDTO;
+            } else {
+              return {
+                id: ui.id,
+               stockLevel: ui.stockLevel
+              } satisfies UpdateAnanasProductDTO;
+            }
+          })
+        ),
       }
     );
     if (!updateResponse.ok) {
@@ -105,6 +153,7 @@ serve(async (req) => {
       logItems.forEach((li) => {
         li.status = "ananas api call error " + text;
       });
+      return {ananasResponse, status: "fail" }
     } else {
       const jsonData = (await updateResponse.json()) as AnanasUpdateResponse[];
       ananasResponse = jsonData;
@@ -125,16 +174,7 @@ serve(async (req) => {
     if (logInsertError) {
       console.error("Error inserting log items", logInsertError);
     }
-    return new Response(
-      JSON.stringify({
-        status: "ok",
-        ananasResponse: ananasResponse,
-        message: "Successfully called ananas api",
-      }),
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+return {ananasResponse, status: "success"};
   } catch {
     logItems.forEach((li) => {
       li.status = "ananas api call error";
@@ -146,15 +186,6 @@ serve(async (req) => {
     if (logInsertError) {
       console.error("Error inserting log items", logInsertError);
     }
-    return new Response(
-      JSON.stringify({
-        status: "ok",
-        ananasResponse: ananasResponse,
-        message: "Error calling ananas api",
-      }),
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return {ananasResponse, status: "fail"}
   }
-});
+}

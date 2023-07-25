@@ -17,10 +17,22 @@ export type AnanasProduct = {
   warehouse: string;
 };
 
-export type UpdateAnanasProductDTO = {
+export type UpdateAnanasItem = {
   id: number;
-  basePrice: number;
-  stockLevel: number;
+  sku: string;
+  ean: string;
   oldBasePrice: number;
+  basePrice: number;
   oldStockLevel: number;
+  stockLevel: number;
+  update: "price" | "stock";
 };
+export type UpdateAnanasProductDTO =
+  | {
+      id: number;
+      basePrice: number;
+    }
+  | {
+      id: number;
+      stockLevel: number;
+    };

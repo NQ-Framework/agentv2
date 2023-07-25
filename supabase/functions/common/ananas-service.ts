@@ -1,7 +1,4 @@
-import {
-  AnanasProduct,
-  UpdateAnanasProductDTO,
-} from "./ananas-product.model.ts";
+import { AnanasProduct, UpdateAnanasItem } from "./ananas-product.model.ts";
 import { AnanasPrice } from "./ananas-price.model.ts";
 import { ErpProduct } from "./erp-product.model.ts";
 import { format } from "https://deno.land/std@0.160.0/datetime/mod.ts";
@@ -17,40 +14,52 @@ function matchIds(id1: string, id2: string): boolean {
 export const getSyncItems = (
   products: AnanasProduct[],
   erpProducts: ErpProduct[]
-): UpdateAnanasProductDTO[] => {
-  const dtos: UpdateAnanasProductDTO[] = [];
+): UpdateAnanasItem[] => {
+  const items: UpdateAnanasItem[] = [];
 
   for (const p of products) {
     const erpProduct =
       erpProducts.find((ep) => matchIds(ep.acCode, p.ean)) ||
       erpProducts.find((ep) => matchIds(ep.acIdent, p.sku));
-    if (erpProduct && hasDifference(p, erpProduct)) {
-      dtos.push({
-        basePrice: erpProduct.anSalePrice,
-        id: p.id,
-        oldBasePrice: p.basePrice,
-        oldStockLevel: p.stockLevel,
-        stockLevel: erpProduct.anStock,
-      });
+    if (erpProduct) {
+      if (p.stockLevel !== erpProduct.anStock) {
+        items.push({
+          ean: p.ean,
+          sku: p.sku,
+          id: p.id,
+          oldBasePrice: p.basePrice,
+          oldStockLevel: p.stockLevel,
+          stockLevel: erpProduct.anStock,
+          basePrice: p.newBasePrice,
+          update: "stock",
+        });
+      }
+      if (p.newBasePrice !== erpProduct.anSalePrice) {
+        items.push({
+          ean: p.ean,
+          sku: p.sku,
+          id: p.id,
+          oldBasePrice: p.basePrice,
+          oldStockLevel: p.stockLevel,
+          basePrice: erpProduct.anSalePrice,
+          stockLevel: p.stockLevel,
+          update: "price",
+        });
+      }
+      //   dtos.push({
+      //     basePrice: erpProduct.anSalePrice,
+      //     id: p.id,
+      //     sku: p.sku,
+      //     ean: p.ean,
+      //     oldBasePrice: p.basePrice,
+      //     oldStockLevel: p.stockLevel,
+      //     stockLevel: erpProduct.anStock,
+      //     differences,
+      // });
     }
   }
 
-  return dtos;
-};
-
-const hasDifference = (
-  product: AnanasProduct,
-  erpProduct: ErpProduct
-): boolean => {
-  if (product.stockLevel !== erpProduct.anStock) {
-    return true;
-  }
-
-  if (product.newBasePrice !== erpProduct.anSalePrice) {
-    return true;
-  }
-
-  return false;
+  return items;
 };
 
 export const getPrices = async (

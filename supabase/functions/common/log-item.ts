@@ -2,6 +2,8 @@ export type LogItem = {
   id?: number;
   created_at: Date;
   product_id: number;
+  sku: string;
+  ean: string;
   status: string;
   update_id: string;
   update_details: UpdateProductPriceAndStock;
@@ -9,11 +11,11 @@ export type LogItem = {
 };
 
 export type UpdateProductPriceAndStock = {
-  type: "price-and-stock";
+  type: "price" | "stock";
   ean?: string;
   productName?: string;
-  oldStock: number;
-  newStock: number;
-  oldPrice: number;
-  newPrice: number;
+  oldStock?: number;
+  newStock?: number;
+  oldPrice?: number;
+  newPrice?: number;
 };
