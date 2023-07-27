@@ -37,8 +37,8 @@ function init() {
                 const status = "success";
                 const errorText = undefined;
                 if (
-                  !payload.request.output ||
-                  payload.request.output === "updateTable"
+                  !payload.new.request.output ||
+                  payload.new.request.output === "updateTable"
                 ) {
                   return client
                     .from("agent_query")
@@ -47,12 +47,12 @@ function init() {
                       executed_at: new Date(),
                       executed_by: 1,
                     })
-                    .match({ id: payload.id });
+                    .match({ id: payload.new.id });
                 }
 
-                if (payload.request.output === "callUrl") {
-                  const { url } = payload.request;
-                  let { authHeader } = payload.request;
+                if (payload.new.request.output === "callUrl") {
+                  const { url } = payload.new.request;
+                  let { authHeader } = payload.new.request;
                   if (authHeader === "inherit") {
                     authHeader = `Bearer ${client.auth.session().access_token}`;
                   }
@@ -79,14 +79,14 @@ function init() {
                           executed_at: new Date(),
                           executed_by: 1,
                         })
-                        .match({ id: payload.id })
+                        .match({ id: payload.new.id })
                         .then((res) =>
                           console.log("updated agent query response: ", res)
                         );
                     });
                 }
                 throw new Error(
-                  `Invalid output type for supabase realtime: ${payload.request.output}`
+                  `Invalid output type for supabase realtime: ${payload.new.request.output}`
                 );
               })
               .then(() => {
