@@ -3,6 +3,7 @@ import { AnanasPrice } from "./ananas-price.model.ts";
 import { ErpProduct } from "./erp-product.model.ts";
 import { format } from "https://deno.land/std@0.160.0/datetime/mod.ts";
 import addDays from "https://deno.land/x/date_fns@v2.22.1/addDays/index.ts";
+import { SupabaseClient } from "../deps.ts";
 
 function matchIds(id1: string, id2: string): boolean {
   if (!id1 || !id2) {
@@ -107,16 +108,19 @@ merchantInventoryIds: ${bucket.join(",")}
   return ananasPrices;
 };
 
-export const getProductsAllPages = async (apiDetails: {
-  baseUrl: string;
-  token: string;
-}): Promise<AnanasProduct[]> => {
+export const getProductsAllPages = async (
+  apiDetails: {
+    baseUrl: string;
+    token: string;
+  },
+  context?: { updateId?: string; supabaseClient?: SupabaseClient }
+): Promise<AnanasProduct[]> => {
   console.log("start get all pages");
   let page = 0;
   const responseProducts: AnanasProduct[] = [];
   let lastResponseEmpty = false;
   while (!lastResponseEmpty) {
-    const products = await getProductsPage(apiDetails, page);
+    const products = await getProductsPage(apiDetails, page, context);
     if (products.length === 0) {
       lastResponseEmpty = true;
     }
@@ -132,19 +136,32 @@ export const getProductsAllPages = async (apiDetails: {
 
 export const getProductsPage = async (
   apiDetails: { baseUrl: string; token: string },
-  page = 0
+  page = 0,
+  context?: { updateId?: string; supabaseClient?: SupabaseClient }
 ): Promise<AnanasProduct[]> => {
   console.log("starting get page ", page);
-  const response = await fetch(
+  const requestTime = new Date();
+  const requestUrl =
     apiDetails.baseUrl +
-      `/product/api/v1/merchant-integration/products?size=250&page=${page}`,
-    {
-      headers: {
-        Authorization: `Bearer ${apiDetails.token}`,
-      },
-    }
-  );
+    `/product/api/v1/merchant-integration/products?size=250&page=${page}`;
+  const response = await fetch(requestUrl, {
+    headers: {
+      Authorization: `Bearer ${apiDetails.token}`,
+    },
+  });
+  const responseTime = new Date();
   const products = (await response.json()) as AnanasProduct[];
   console.log("returning: ", products.length);
+  if (context?.supabaseClient) {
+    await context.supabaseClient.from("ananas_network_log").insert({
+      update_id: context?.updateId ?? null,
+      request_timestamp: requestTime.toUTCString(),
+      request: {
+        requestUrl,
+      },
+      response_timestamp: responseTime.toUTCString(),
+      response: products,
+    });
+  }
   return products;
 };

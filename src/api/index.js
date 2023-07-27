@@ -60,7 +60,6 @@ router.post("/", (req, res) => {
   }
 
   const { type, query } = queryParams;
-  console.log("wat wat", body);
   return processQuery({
     request: {
       type,

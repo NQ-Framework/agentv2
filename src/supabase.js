@@ -27,8 +27,11 @@ function init() {
               parseInt(process.env.SUPABASE_BU_ID, 10) &&
             payload.new.executed_at === null
           ) {
-            //Received new payload for configured BU_ID:
-
+            // Received new payload for configured BU_ID:
+            console.log(
+              `executing new request... payload:
+              ${JSON.stringify(payload, null, 2)}`
+            );
             processRequest(payload.new)
               .then((result) => {
                 const status = "success";
