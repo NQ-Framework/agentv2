@@ -38,6 +38,7 @@ serve(async (req) => {
 
   const apiDetails = await getAnanasApiDetails(businessUnitId, supabaseClient, {
     updateId,
+    supabaseClient: adminSupabaseClient,
   });
   console.log("got api details", apiDetails);
   if (!apiDetails) {
@@ -49,7 +50,7 @@ serve(async (req) => {
 
   const products = await getProductsAllPages(apiDetails, {
     updateId,
-    supabaseClient,
+    supabaseClient: adminSupabaseClient,
   });
 
   console.log(
@@ -103,18 +104,21 @@ serve(async (req) => {
     };
   });
 
+  const priceUpdateItems = updateItems.filter((ui) => ui.update === "price");
   const responsePrice = await updateAnanasProducts(
     "price",
     apiDetails,
-    updateItems.filter((ui) => ui.update === "price"),
+    priceUpdateItems,
     logItems,
     adminSupabaseClient,
     updateId
   );
+
+  const stockUpdateItems = updateItems.filter((ui) => ui.update === "stock");
   const responseStock = await updateAnanasProducts(
     "stock",
     apiDetails,
-    updateItems.filter((ui) => ui.update === "stock"),
+    stockUpdateItems,
     logItems,
     adminSupabaseClient,
     updateId
@@ -151,8 +155,15 @@ async function updateAnanasProducts(
   updateId?: string
 ): Promise<{
   ananasResponse: AnanasUpdateResponse[] | null;
-  status: "success" | "fail";
+  status: "success" | "fail" | "skipped";
 }> {
+  if (!updateItems || updateItems.length === 0) {
+    console.log(`skipping ${type} update, no items passed in`);
+    return {
+      ananasResponse: null,
+      status: "skipped",
+    };
+  }
   let ananasResponse = null;
   const requestTime = new Date();
   const updateItemsBody = updateItems.map((ui) => {

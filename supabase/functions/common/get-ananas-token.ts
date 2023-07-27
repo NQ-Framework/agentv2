@@ -2,7 +2,7 @@ import { SupabaseClient } from "../deps.ts";
 export async function getAnanasApiDetails(
   businessUnitId: number,
   supabaseClient: SupabaseClient,
-  context?: { updateId?: string }
+  context?: { updateId?: string; supabaseClient: SupabaseClient }
 ): Promise<{ token: string; baseUrl: string; configuration: any } | null> {
   const result = await supabaseClient
     .from("ananas_token")
@@ -43,7 +43,7 @@ export async function getAnanasApiDetails(
     tokenResponse.statusText
   );
   const tokenJson = await tokenResponse.json();
-  await supabaseClient.from("ananas_network_log").insert({
+  await context?.supabaseClient.from("ananas_network_log").insert({
     update_id: context?.updateId ?? null,
     request: { configuration, baseUrl, requestBody: request },
     request_timestamp: tokenRequestTime.toUTCString(),
