@@ -18,4 +18,5 @@ export type UpdateProductPriceAndStock = {
   newStock?: number;
   oldPrice?: number;
   newPrice?: number;
+  note: string;
 };

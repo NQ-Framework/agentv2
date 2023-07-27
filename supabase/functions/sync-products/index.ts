@@ -6,10 +6,7 @@ import { getAnanasApiDetails } from "../common/get-ananas-token.ts";
 import { LogItem } from "../common/log-item.ts";
 import { SupabaseClient, createClient } from "../deps.ts";
 import { v4 as uuidV4 } from "https://deno.land/std@0.82.0/uuid/mod.ts";
-import {
-  UpdateAnanasItem,
-  UpdateAnanasProductDTO,
-} from "../common/ananas-product.model.ts";
+import { UpdateAnanasItem } from "../common/ananas-product.model.ts";
 
 serve(async (req) => {
   const body = await req.json();
@@ -51,7 +48,11 @@ serve(async (req) => {
     `Executing product sync. Got this many pantheon products: ${erpProducts.length} and this many ananas produts: ${products.length}`
   );
 
-  const updateItems = getSyncItems(products, erpProducts);
+  const updateItems = getSyncItems(
+    products,
+    erpProducts,
+    apiDetails.configuration?.setUnmatchedProductsToZeroStock === true
+  );
   if (!updateItems || updateItems.length === 0) {
     console.log("No items to update! Job done");
     return new Response(
@@ -85,11 +86,13 @@ serve(async (req) => {
               type: "price",
               oldPrice: item.oldBasePrice,
               newPrice: item.basePrice,
+              note: item.note,
             }
           : {
               type: "stock",
               oldStock: item.oldStockLevel,
               newStock: item.stockLevel,
+              note: item.note,
             },
     };
   });
@@ -108,6 +111,14 @@ serve(async (req) => {
     logItems,
     adminSupabaseClient
   );
+
+  console.log("inserting log items", logItems);
+  const { error: logInsertError } = await adminSupabaseClient
+    .from("ananas_log")
+    .insert(logItems);
+  if (logInsertError) {
+    console.error("Error inserting log items", logInsertError);
+  }
 
   return new Response(
     JSON.stringify({
@@ -145,12 +156,12 @@ async function updateAnanasProducts(
         },
         body: JSON.stringify(
           updateItems.map((ui) => {
-            if (type === "price") {
+            if (type === "price" && ui.update === "price") {
               return {
                 id: ui.id,
                 basePrice: ui.basePrice,
               };
-            } else {
+            } else if (type === "stock" && ui.update === "stock") {
               return {
                 id: ui.id,
                 stockLevel: ui.stockLevel,
@@ -185,25 +196,11 @@ async function updateAnanasProducts(
         }
       });
     }
-    console.log("inserting log items", logItems);
-    const { error: logInsertError } = await adminSupabaseClient
-      .from("ananas_log")
-      .insert(logItems);
-    if (logInsertError) {
-      console.error("Error inserting log items", logInsertError);
-    }
     return { ananasResponse, status: "success" };
   } catch {
     logItems.forEach((li) => {
       li.status = "ananas api call error";
     });
-    console.log("inserting log items iz catcha", logItems);
-    const { error: logInsertError } = await adminSupabaseClient
-      .from("ananas_log")
-      .insert(logItems);
-    if (logInsertError) {
-      console.error("Error inserting log items", logInsertError);
-    }
     return { ananasResponse, status: "fail" };
   }
 }

@@ -21,12 +21,20 @@ export type UpdateAnanasItem = {
   id: number;
   sku: string;
   ean: string;
-  oldBasePrice: number;
-  basePrice: number;
-  oldStockLevel: number;
-  stockLevel: number;
-  update: "price" | "stock";
-};
+  note: string;
+} & (
+  | {
+      oldBasePrice: number;
+      basePrice: number;
+      update: "price";
+    }
+  | {
+      oldStockLevel: number;
+      stockLevel: number;
+      update: "stock";
+    }
+);
+
 export type UpdateAnanasProductDTO =
   | {
       id: number;

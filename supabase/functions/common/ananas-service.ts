@@ -13,7 +13,8 @@ function matchIds(id1: string, id2: string): boolean {
 
 export const getSyncItems = (
   products: AnanasProduct[],
-  erpProducts: ErpProduct[]
+  erpProducts: ErpProduct[],
+  setUnmatchedProductsToZeroStock: boolean
 ): UpdateAnanasItem[] => {
   const items: UpdateAnanasItem[] = [];
 
@@ -27,11 +28,10 @@ export const getSyncItems = (
           ean: p.ean,
           sku: p.sku,
           id: p.id,
-          oldBasePrice: p.basePrice,
           oldStockLevel: p.stockLevel,
           stockLevel: erpProduct.anStock,
-          basePrice: p.newBasePrice,
           update: "stock",
+          note: "",
         });
       }
       if (p.newBasePrice !== erpProduct.anSalePrice) {
@@ -39,23 +39,24 @@ export const getSyncItems = (
           ean: p.ean,
           sku: p.sku,
           id: p.id,
-          oldBasePrice: p.basePrice,
-          oldStockLevel: p.stockLevel,
+          oldBasePrice: p.newBasePrice,
           basePrice: erpProduct.anSalePrice,
-          stockLevel: p.stockLevel,
           update: "price",
+          note: "",
         });
       }
-      //   dtos.push({
-      //     basePrice: erpProduct.anSalePrice,
-      //     id: p.id,
-      //     sku: p.sku,
-      //     ean: p.ean,
-      //     oldBasePrice: p.basePrice,
-      //     oldStockLevel: p.stockLevel,
-      //     stockLevel: erpProduct.anStock,
-      //     differences,
-      // });
+    } else {
+      if (setUnmatchedProductsToZeroStock) {
+        items.push({
+          ean: p.ean,
+          sku: p.sku,
+          id: p.id,
+          oldStockLevel: p.stockLevel,
+          stockLevel: 0,
+          update: "stock",
+          note: "product not found in sync data, set stock 0 (setUnmatchedProductsToZeroStock)",
+        });
+      }
     }
   }
 

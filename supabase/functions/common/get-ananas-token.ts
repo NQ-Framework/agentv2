@@ -2,7 +2,7 @@ import { SupabaseClient } from "../deps.ts";
 export async function getAnanasApiDetails(
   businessUnitId: number,
   supabaseClient: SupabaseClient
-): Promise<{ token: string; baseUrl: string } | null> {
+): Promise<{ token: string; baseUrl: string; configuration: any } | null> {
   const result = await supabaseClient
     .from("ananas_token")
     .select("*")
@@ -19,6 +19,7 @@ export async function getAnanasApiDetails(
   const clientId: string = result.data?.[0]?.client_id;
   const clientSecret: string = result.data?.[0]?.token;
   const baseUrl: string = result.data?.[0]?.base_api_url;
+  const configuration: any = result.data?.[0]?.configuration;
 
   const tokenResponse = await fetch(`${baseUrl}/iam/api/v1/auth/token`, {
     headers: {
@@ -38,5 +39,5 @@ export async function getAnanasApiDetails(
     tokenResponse.statusText
   );
   const tokenJson = await tokenResponse.json();
-  return { token: tokenJson.access_token, baseUrl };
+  return { token: tokenJson.access_token, baseUrl, configuration };
 }
