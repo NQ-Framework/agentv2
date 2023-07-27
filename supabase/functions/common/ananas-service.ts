@@ -47,7 +47,7 @@ export const getSyncItems = (
         });
       }
     } else {
-      if (setUnmatchedProductsToZeroStock) {
+      if (setUnmatchedProductsToZeroStock && p.stockLevel !== 0) {
         items.push({
           ean: p.ean,
           sku: p.sku,
