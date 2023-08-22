@@ -15,7 +15,9 @@ function matchIds(id1: string, id2: string): boolean {
 export const getSyncItems = (
   products: AnanasProduct[],
   erpProducts: ErpProduct[],
-  setUnmatchedProductsToZeroStock: boolean
+  setUnmatchedProductsToZeroStock: boolean,
+  syncStock: boolean,
+  syncPrice: boolean
 ): UpdateAnanasItem[] => {
   const items: UpdateAnanasItem[] = [];
 
@@ -24,7 +26,7 @@ export const getSyncItems = (
       erpProducts.find((ep) => matchIds(ep.acCode, p.ean)) ||
       erpProducts.find((ep) => matchIds(ep.acIdent, p.sku));
     if (erpProduct) {
-      if (p.stockLevel !== erpProduct.anStock) {
+      if (syncStock && p.stockLevel !== erpProduct.anStock) {
         items.push({
           ean: p.ean,
           sku: p.sku,
@@ -35,7 +37,7 @@ export const getSyncItems = (
           note: "",
         });
       }
-      if (p.newBasePrice !== erpProduct.anSalePrice) {
+      if (syncPrice && p.newBasePrice !== erpProduct.anSalePrice) {
         items.push({
           ean: p.ean,
           sku: p.sku,
@@ -47,7 +49,7 @@ export const getSyncItems = (
         });
       }
     } else {
-      if (setUnmatchedProductsToZeroStock && p.stockLevel !== 0) {
+      if (syncStock && setUnmatchedProductsToZeroStock && p.stockLevel !== 0) {
         items.push({
           ean: p.ean,
           sku: p.sku,

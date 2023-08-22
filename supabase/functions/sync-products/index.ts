@@ -57,10 +57,15 @@ serve(async (req) => {
     `Executing product sync. Got this many pantheon products: ${erpProducts.length} and this many ananas produts: ${products.length}`
   );
 
+  const syncStock = apiDetails.configuration?.syncStock ?? true;
+  const syncPrice = apiDetails.configuration?.syncPrice ?? true;
+
   const updateItems = getSyncItems(
     products,
     erpProducts,
-    apiDetails.configuration?.setUnmatchedProductsToZeroStock === true
+    apiDetails.configuration?.setUnmatchedProductsToZeroStock === true,
+    syncStock,
+    syncPrice
   );
   if (!updateItems || updateItems.length === 0) {
     console.log("No items to update! Job done");
