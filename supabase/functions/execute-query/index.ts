@@ -26,6 +26,7 @@ serve(async (req) => {
     request: {
       type: body.queryType,
       query: body.query,
+      params: body.params ?? [],
     },
     request_id: uuid,
   });
