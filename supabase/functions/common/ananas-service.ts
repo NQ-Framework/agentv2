@@ -145,7 +145,7 @@ export const getProductsPage = async (
   const requestTime = new Date();
   const requestUrl =
     apiDetails.baseUrl +
-    `/product/api/v1/merchant-integration/products?size=250&page=${page}`;
+    `/product/api/v1/merchant-integration/products?size=1000&page=${page}`;
   const response = await fetch(requestUrl, {
     headers: {
       Authorization: `Bearer ${apiDetails.token}`,
@@ -162,7 +162,14 @@ export const getProductsPage = async (
         requestUrl,
       },
       response_timestamp: responseTime.toUTCString(),
-      response: products,
+      response: products.map((p) => ({
+        id: p.id,
+        sku: p.sku,
+        ean: p.ean,
+        stockLevel: p.stockLevel,
+        newBasePrice: p.newBasePrice,
+        basePrice: p.basePrice,
+      })),
     });
   }
   return products;

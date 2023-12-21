@@ -43,12 +43,12 @@ export async function getAnanasApiDetails(
     tokenResponse.statusText
   );
   const tokenJson = await tokenResponse.json();
-  await context?.supabaseClient.from("ananas_network_log").insert({
-    update_id: context?.updateId ?? null,
-    request: { configuration, baseUrl, requestBody: request },
-    request_timestamp: tokenRequestTime.toUTCString(),
-    response: tokenJson,
-    response_timestamp: tokenResponseTime.toUTCString(),
-  });
+  // await context?.supabaseClient.from("ananas_network_log").insert({
+  //   update_id: context?.updateId ?? null,
+  //   request: { configuration, baseUrl, requestBody: request },
+  //   request_timestamp: tokenRequestTime.toUTCString(),
+  //   response: tokenJson,
+  //   response_timestamp: tokenResponseTime.toUTCString(),
+  // });
   return { token: tokenJson.access_token, baseUrl, configuration };
 }
