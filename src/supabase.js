@@ -6,6 +6,10 @@ function init() {
     console.log("SUPABASE_HOST not set. Disabling realtime queries.");
     return;
   }
+
+  const businessUnitIds = process.env.SUPABASE_BU_ID.split(",").map((id) =>
+    parseInt(id, 10)
+  );
   const client = supabase.createClient(
     process.env.SUPABASE_HOST,
     process.env.SUPABASE_PUBLIC_KEY
@@ -23,8 +27,7 @@ function init() {
           if (
             (payload.eventType === "INSERT" ||
               payload.eventType === "UPDATE") &&
-            payload.new.business_unit_id ===
-              parseInt(process.env.SUPABASE_BU_ID, 10) &&
+            businessUnitIds.includes(payload.new.business_unit_id) &&
             payload.new.executed_at === null
           ) {
             // Received new payload for configured BU_ID:
@@ -58,7 +61,7 @@ function init() {
                   }
                   const body = JSON.stringify({
                     result,
-                    businessUnitId: process.env.SUPABASE_BU_ID,
+                    businessUnitId: payload.new.business_unit_id.toString(),
                   });
                   return fetch(url, {
                     method: "POST",
